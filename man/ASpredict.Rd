@@ -2,18 +2,24 @@
 % Please edit documentation in R/machine_learning.R
 \name{ASpredict}
 \alias{ASpredict}
-\title{Predicting the KPI value for the algorithms}
+\title{Internal generic for ASpredict}
 \usage{
 ASpredict(training_object, ...)
 }
 \arguments{
-\item{training_object}{list of class \code{as_train}.}
+\item{training_object}{object.}
 
 \item{...}{other parameters.}
 }
-\value{
-A data frame, result of the respective ASpredict method.
-}
 \description{
-For each algorithm, the output (KPI) is predicted using the models trained with \code{AStrain()}.
+This function serves as the internal S3 generic for \code{ASpredict} methods.
+It dispatches the call to the appropriate method based on the class of \code{training_object}.
+Currently, only \code{as_train} is implemented. Users or developers can
+extend this generic by writing new methods for other classes.
 }
+\details{
+This generic is not intended to be used directly by package users. It exists
+to enable method dispatch for different classes. Marked as \code{internal} to keep
+it out of the user-facing function index.
+}
+\keyword{internal}

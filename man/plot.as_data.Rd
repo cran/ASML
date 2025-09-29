@@ -35,7 +35,7 @@
 
 \item{color_list}{list with the colors for the plots. If NULL, or insufficient number of colors, the colors will be generated automatically.}
 
-\item{ml_color}{color por the ML boxplot. If NULL, it will be generated automatically.}
+\item{ml_color}{color for the ML boxplot. If NULL, it will be generated automatically.}
 
 \item{path}{path where plots will be saved. If NULL they won't be saved.}
 

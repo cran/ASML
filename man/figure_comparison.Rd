@@ -2,18 +2,24 @@
 % Please edit documentation in R/graphics.R
 \name{figure_comparison}
 \alias{figure_comparison}
-\title{Figure comparison}
+\title{Internal generic for figure_comparison}
 \usage{
 figure_comparison(data_object, ...)
 }
 \arguments{
-\item{data_object}{an object}
+\item{data_object}{object.}
 
-\item{...}{other parameters}
-}
-\value{
-A \code{ggplot} object, result of the respective figure_comparison method.
+\item{...}{other parameters.}
 }
 \description{
-Generates figure comparison plot for an object.
+This function serves as the internal S3 generic for \code{figure_comparison} methods.
+It dispatches the call to the appropriate method based on the class of \code{data_object}.
+Currently, only \code{as_data} is implemented. Users or developers can
+extend this generic by writing new methods for other classes.
 }
+\details{
+This generic is not intended to be used directly by package users. It exists
+to enable method dispatch for different classes. Marked as \code{internal} to keep
+it out of the user-facing function index.
+}
+\keyword{internal}

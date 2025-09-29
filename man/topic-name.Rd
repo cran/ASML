@@ -29,7 +29,7 @@
 \itemize{
 \item "different_data_points": Tied algorithms in the optimal selection are all counted as different data points (increasing the total number of x values and therefore giving all of the tied algorithms the same weight).
 \item "ml_if_optimal": For tied algorithms, the one selected by ML is chosen if it corresponds to the optimal one. Otherwise, the same as in option \code{different_data_points} is done.
-\item "ml_selection": For tied algorithms, the one prefered by the ML is chosen.
+\item "ml_selection": For tied algorithms, the one preferred by the ML is chosen.
 }}
 
 \item{main}{an overall title for the plot.}

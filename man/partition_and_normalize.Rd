@@ -24,13 +24,13 @@ partition_and_normalize(
 
 \item{y.test}{dataframe with the test outputs. If NULL the algorithm will y into training and test sets.}
 
-\item{family_column}{column number of x where each instance family is indicated. If given, aditional options for the training and set test splitting and the graphics are enabled.}
+\item{family_column}{column number of x where each instance family is indicated. If given, adittional options for the training and set test splitting and the graphics are enabled.}
 
 \item{split_by_family}{boolean indicating if we want to split sets keeping family proportions in case x.test and y.test are NULL. This option requires that option \code{family_column} is different from NULL.}
 
 \item{test_size}{float with the segmentation proportion for the test dataframe. It must be a value between 0 and 1. Only needed when \code{x.test} and \code{y.test} are NULL.}
 
-\item{better_smaller}{boolean that indicates wether the output (KPI) is better if smaller (TRUE) or larger (FALSE).}
+\item{better_smaller}{boolean that indicates whether the output (KPI) is better if smaller (TRUE) or larger (FALSE).}
 }
 \value{
 A list is returned of class \code{as_data} containing:

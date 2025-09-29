@@ -19,7 +19,7 @@
 A data frame with the predictions for each instance (rows), corresponding to each algorithm (columns). In case f is specified, some actions might be needed to get the predictions from the returned value.
 }
 \description{
-For each algorithm, the output (KPI) is predicted using the models traing with \code{AStrain()}.
+For each algorithm, the output (KPI) is predicted using the models trained with \code{AStrain()}.
 }
 \details{
 The \code{ASpredict()} uses the prediction function from \code{caret} to compute (for each of the models trained) the predictions for the new data provided by the user.

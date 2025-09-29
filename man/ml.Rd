@@ -28,7 +28,7 @@ ml(
 
 \item{y.test}{dataframe with the test outputs. If NULL, the algorithm will split y into training and test sets.}
 
-\item{family_column}{column number of x where each instance family is indicated. If given, aditional options for the training and set test splitting and the graphics are enabled.}
+\item{family_column}{column number of x where each instance family is indicated. If given, adittional options for the training and set test splitting and the graphics are enabled.}
 
 \item{split_by_family}{boolean indicating if we want to split sets keeping family proportions in case x.test and y.test are NULL. This option requires that option \code{family_column} is different from NULL}
 
@@ -36,7 +36,7 @@ ml(
 
 \item{test_size}{float with the segmentation proportion for the test dataframe. It must be a value between 0 and 1.}
 
-\item{better_smaller}{boolean that indicates wether the output (KPI) is better if smaller (TRUE) or larger (FALSE).}
+\item{better_smaller}{boolean that indicates whether the output (KPI) is better if smaller (TRUE) or larger (FALSE).}
 
 \item{method}{name of the model to be used. The user can choose from any of the models provided by \code{caret}. See \url{http://topepo.github.io/caret/train-models-by-tag.html} for more information about the models supported.}
 
@@ -55,7 +55,7 @@ A list with the data and plots generated, including:
 }
 }
 \description{
-Function that proceses input data, trains the machine learning models, makes a prediction and plots the results.
+Function that processes input data, trains the machine learning models, makes a prediction and plots the results.
 }
 \examples{
 \donttest{

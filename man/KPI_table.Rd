@@ -2,37 +2,24 @@
 % Please edit documentation in R/tables.R
 \name{KPI_table}
 \alias{KPI_table}
-\alias{KPI_table.as_data}
-\title{KPI table}
+\title{Internal generic for KPI_table}
 \usage{
 KPI_table(data_object, ...)
-
-\method{KPI_table}{as_data}(data_object, predictions = NULL, test = TRUE, ...)
 }
 \arguments{
-\item{data_object}{an object of class \code{as_data}.}
+\item{data_object}{object.}
 
 \item{...}{other parameters.}
-
-\item{predictions}{a data frame with the predicted KPI for each algorithm (columns) and for each instance (rows). If NULL, the table won't include a ML column.}
-
-\item{test}{flag that indicates whether the function should use test data or training data.}
-}
-\value{
-A table, result of the respective KPI_table method.
-
-A table with the statistics of the pace.
 }
 \description{
-Generates a table with the values of the KPI.
-
-Function that generates a table with the values of the KPI.
+This function serves as the internal S3 generic for \code{KPI_table} methods.
+It dispatches the call to the appropriate method based on the class of \code{data_object}.
+Currently, only \code{as_data} is implemented. Users or developers can
+extend this generic by writing new methods for other classes.
 }
-\examples{
-data(branchingsmall)
-data_object <- partition_and_normalize(branchingsmall$x, branchingsmall$y, test_size = 0.3,
-family_column = 1, split_by_family = TRUE)
-training <- AStrain(data_object, method = "glm")
-predictions <- ASpredict(training, newdata = data_object$x.test)
-KPI_table(data_object, predictions = predictions)
+\details{
+This generic is not intended to be used directly by package users. It exists
+to enable method dispatch for different classes. Marked as \code{internal} to keep
+it out of the user-facing function index.
 }
+\keyword{internal}

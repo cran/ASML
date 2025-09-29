@@ -25,9 +25,24 @@ For each algorithm (column) in the data, a model is trained to later predict the
 }
 \examples{
 data(branchingsmall)
+# Partition and normalize the data
 data_object <- partition_and_normalize(branchingsmall$x, branchingsmall$y, test_size = 0.3,
 family_column = 1, split_by_family = TRUE)
+
+# Example: training a regression decision tree
+# with cross-validation control and basic hyperparameter tuning
+train_control <- caret::trainControl(method = "cv", number = 5)
+tune_grid <- expand.grid(cp = c(0.01, 0.05, 0.1))
+training <- AStrain(
+  data_object,
+  method = "rpart",
+  trControl = train_control,
+  tuneGrid = tune_grid
+)
+
+# Example: training with glm and similar with custom function
 training <- AStrain(data_object, method = "glm")
+
 custom_function <- function(x, y) {
   glm.fit(x, y)
 }

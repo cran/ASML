@@ -1,14 +1,60 @@
+# -------------------------------------------------------------------------
+# File: KPI_tables.R
+#
+# Purpose:
+#   Provides functions to generate KPI (Key Performance Indicator) tables
+#   and summary tables from objects of class `as_data`. These utilities are
+#   used to evaluate algorithm performance on training or test datasets and
+#   to compare predictions against optimal and best baselines.
+#
+# Major functions:
+#   - KPI_table():
+#       S3 generic. Dispatches to class-specific methods to generate a KPI table.
+#
+#   - KPI_table.as_data():
+#       Implementation for `as_data` objects. Produces a table of means and
+#       geometric means for normalized (and optionally original) KPI values.
+#       Can include ML predictions if provided.
+#
+#   - KPI_summary_table():
+#       S3 generic. Dispatches to class-specific methods to generate a KPI summary table.
+#
+#   - KPI_summary_table.as_data():
+#       Implementation for `as_data` objects. Produces a table summarizing the
+#       KPI for the optimal selection per instance, the best global option,
+#       and (if available) the machine learning predictions.
+#
+# Notes:
+#   - KPI_table() and KPI_summary_table() are exported generics.
+#   - Their `.as_data` implementations are user-facing and return formatted tables.
+#   - Generics can be extended by developers to support additional data object classes.
+#   - Requires `dplyr` for data manipulation and geometric mean calculation.
+# -------------------------------------------------------------------------
+
 utils::globalVariables(c("which_max_value"))
 
-#' @title KPI table
-#' @description Generates a table with the values of the KPI.
-#' @param data_object an object.
+
+#' Internal generic for KPI_table
+#' 
+#' This function serves as the internal S3 generic for `KPI_table` methods.
+#' It dispatches the call to the appropriate method based on the class of `data_object`.
+#' Currently, only `as_data` is implemented. Users or developers can
+#' extend this generic by writing new methods for other classes.
+#' 
+#' @param data_object object.
 #' @param ... other parameters.
-#' @return A table, result of the respective KPI_table method. 
+#' 
+#' @details
+#' This generic is not intended to be used directly by package users. It exists
+#' to enable method dispatch for different classes. Marked as `internal` to keep
+#' it out of the user-facing function index.
+#' 
+#' @keywords internal
 #' @export
-"KPI_table" <- function(data_object, ...) {
+KPI_table <- function(data_object, ...) {
   UseMethod("KPI_table")
 }
+
 
 #' @title KPI table
 #' @description Function that generates a table with the values of the KPI.
@@ -18,7 +64,6 @@ utils::globalVariables(c("which_max_value"))
 #' @param ... other parameters.
 #' @return A table with the statistics of the pace.
 #' @importFrom dplyr %>%
-#' @rdname KPI_table
 #' @examples
 #' data(branchingsmall)
 #' data_object <- partition_and_normalize(branchingsmall$x, branchingsmall$y, test_size = 0.3,
@@ -49,16 +94,16 @@ KPI_table.as_data <- function(data_object, predictions = NULL, test = TRUE, ...)
     stop(paste("The number of output instances [", nrow(y.norm), "] doesn't match the number of instances of the predicted data [", nrow(predictions), "]", sep=""))
   }
 
-  #si no son nulas las predicciones
+  
   if (!is.null(predictions)) {
-    #para cada instancia buscamos el indice del mayor KPI predicho
+    
     wm <- apply(predictions, 1, which.max)
-    #tomamos de los KPIS reales aquel que correspondería con el seleccionado por el ML (idealmente el mayor)
+    
     sel_norm <- numeric()
     for (i in 1:nrow(y.norm)){
-      sel_norm[i] <- y.norm[i, wm[i]] # Ratio of the selected criteria
+      sel_norm[i] <- y.norm[i, wm[i]] 
     }
-    #añadimos una columna a y con la informacion anterior
+    
     y.norm <- cbind("ML" = sel_norm, y.norm)
 
     if(!is.null(y.original)){
@@ -70,7 +115,7 @@ KPI_table.as_data <- function(data_object, predictions = NULL, test = TRUE, ...)
     }
   }
 
-  #media geometrica
+  
   geom <- function(x){
     exp(mean(log(x)))
   }
@@ -85,15 +130,28 @@ KPI_table.as_data <- function(data_object, predictions = NULL, test = TRUE, ...)
   return(table)
 }
 
-#' @title KPI summary table
-#' @description Generates a summary table with the values of the KPI.
-#' @param data_object an object.
+
+#' Internal generic for KPI_summary_table
+#' 
+#' This function serves as the internal S3 generic for `KPI_summary_table` methods.
+#' It dispatches the call to the appropriate method based on the class of `data_object`.
+#' Currently, only `as_data` is implemented. Users or developers can
+#' extend this generic by writing new methods for other classes.
+#' 
+#' @param data_object object.
 #' @param ... other parameters.
-#' @return A table, result of the respective KPI_summary_table method. 
+#' 
+#' @details
+#' This generic is not intended to be used directly by package users. It exists
+#' to enable method dispatch for different classes. Marked as `internal` to keep
+#' it out of the user-facing function index.
+#' 
+#' @keywords internal
 #' @export
-"KPI_summary_table" <- function(data_object, ...) {
+KPI_summary_table <- function(data_object, ...) {
   UseMethod("KPI_summary_table")
 }
+
 
 #' @title KPI summary table
 #' @description Function that generates a summary table of the KPI values. Optimal is the value of the KPI when choosing the best option for each instance. It's the best that we could do with respect to that KPI. Best is the value of the KPI for the best option overall according to the KPI. ML is the value of the KPI choosing for each instance the option selected by the learning.
@@ -104,7 +162,6 @@ KPI_table.as_data <- function(data_object, predictions = NULL, test = TRUE, ...)
 #' @param ... other parameters.
 #' @return A table with the statistics of the pace.
 #' @importFrom dplyr %>%
-#' @rdname KPI_summary_table
 #' @examples
 #' data(branchingsmall)
 #' data_object <- partition_and_normalize(branchingsmall$x, branchingsmall$y, test_size = 0.3,
@@ -136,7 +193,7 @@ KPI_summary_table.as_data <- function(data_object, predictions = NULL, test = TR
     stop(paste("The number of output instances [", nrow(y), "] doesn't match the number of instances of the predicted data [", nrow(predictions), "]", sep=""))
   }
 
-  #media geometrica
+  
   geom <- function(x){
     exp(mean(log(x)))
   }
@@ -148,16 +205,16 @@ KPI_summary_table.as_data <- function(data_object, predictions = NULL, test = TR
     best <- which.min(apply(y_data, 2, geom))
   }
   data$best <- y_data[,best]
-  #si no son nulas las predicciones
+  
   if (!is.null(predictions)) {
-    #para cada instancia buscamos el indice del mayor KPI predicho
+    
     wm <- apply(predictions, 1, which.max)
-    #tomamos de los KPIS reales aquel que correspondería con el seleccionado por el ML (idealmente el mayor)
+    
     sel <- numeric()
     for (i in 1:nrow(y)){
-      sel[i] <- y_data[i, wm[i]] # Ratio of the selected criteria
+      sel[i] <- y_data[i, wm[i]] 
     }
-    #añadimos una columna a y con la informacion anterior
+    
     data$ML <- sel
   }
 

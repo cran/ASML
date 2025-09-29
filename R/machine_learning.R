@@ -1,14 +1,49 @@
+# ========================================================================
+# File: machine_learning.R
+#
+# Purpose:
+# This file contains the core machine learning workflow for the package.
+# It provides functionality to preprocess data, train models (using caret
+# or custom functions), generate predictions, and produce relevant plots
+# and summaries.
+#
+# Major functions:
+# - ml(): Main user-facing function. Preprocesses input data, partitions
+#   into training/test sets, trains models, generates predictions, and
+#   produces a set of summary tables and plots.
+#
+# - AStrain(): S3 generic for training models. Dispatches to
+#   AStrain.as_data() for objects of class 'as_data'.
+#
+# - AStrain.as_data(): Trains one model per algorithm column using caret
+#   (or a custom training function if provided). Supports optional
+#   parallelization with 'snow'.
+#
+# - ASpredict(): S3 generic for making predictions from trained models.
+#   Dispatches to ASpredict.as_train() for objects of class 'as_train'.
+#
+# - ASpredict.as_train(): Produces predictions for each algorithm based
+#   on the trained models. Supports both caret's default predict method
+#   and custom user-supplied prediction functions.
+#
+# Notes:
+# - All functions are designed to integrate smoothly with the package's
+#   plotting utilities in graphics.R.
+# - The ml() function is intended as the main entry point for users,
+#   while AStrain* and ASpredict* are exposed for advanced use cases.
+# ========================================================================
+
 #' @title Machine learning process
-#' @description Function that proceses input data, trains the machine learning models, makes a prediction and plots the results.
+#' @description Function that processes input data, trains the machine learning models, makes a prediction and plots the results.
 #' @param x dataframe with the instances (rows) and its features (columns). It may also include a column with the family data.
 #' @param y dataframe with the instances (rows) and the corresponding output (KPI) for each algorithm (columns).
 #' @param x.test dataframe with the test features. It may also include a column with the family data. If NULL, the algorithm will split x into training and test sets.
 #' @param y.test dataframe with the test outputs. If NULL, the algorithm will split y into training and test sets.
-#' @param family_column column number of x where each instance family is indicated. If given, aditional options for the training and set test splitting and the graphics are enabled.
+#' @param family_column column number of x where each instance family is indicated. If given, adittional options for the training and set test splitting and the graphics are enabled.
 #' @param split_by_family boolean indicating if we want to split sets keeping family proportions in case x.test and y.test are NULL. This option requires that option `family_column` is different from NULL
 #' @param predict boolean indicating if predictions will be made or not. If FALSE plots will use training data only and no ML column will be displayed.
 #' @param test_size float with the segmentation proportion for the test dataframe. It must be a value between 0 and 1.
-#' @param better_smaller boolean that indicates wether the output (KPI) is better if smaller (TRUE) or larger (FALSE).
+#' @param better_smaller boolean that indicates whether the output (KPI) is better if smaller (TRUE) or larger (FALSE).
 #' @param method name of the model to be used. The user can choose from any of the models provided by `caret`. See <http://topepo.github.io/caret/train-models-by-tag.html> for more information about the models supported.
 #' @param test boolean indicating whether the predictions will be made with the test set or the training set.
 #' @param color_list list with the colors for the plots. If NULL or insufficient number of colors, the colors will be generated automatically.
@@ -27,17 +62,17 @@
 #' @export
 
 ml <- function(x, y, x.test = NULL, y.test = NULL, family_column = NULL, split_by_family = FALSE, predict = TRUE, test_size = 0.25, better_smaller = TRUE, method ="ranger", test = TRUE, color_list = NULL){
-  #para que los posibles warnings se muestren en el momento que ocurren
+  
   options(warn = 1)
-  #procesamos los datos
+  
   message("Processing data...")
   data_obj <- partition_and_normalize(x, y, x.test, y.test, test_size = test_size, family_column = family_column, split_by_family = split_by_family, better_smaller = better_smaller)
 
-  # Aprendizaje
+  
   message(paste("\nLearning with",  method, "method"))
   training <- AStrain(data_obj, method = method)
 
-  # Predicción
+  
   predictions <- NULL
   if(predict){
     if(test){
@@ -49,17 +84,17 @@ ml <- function(x, y, x.test = NULL, y.test = NULL, family_column = NULL, split_b
     }
   }
 
-  #Resumen de las predicciones
+  
   message("\nGenerating data summary")
   table <- suppressMessages(KPI_table(data_obj, predictions, test = test))
 
-  #Graficos
+  
   message("\nGenerating  plots...")
   boxplot <- suppressMessages(boxplots(data_obj, predictions = predictions, test = test, by_families = !is.null(family_column), color_list = color_list))
 
   ranking_plot <- suppressMessages(ranking(data_obj, predictions = predictions, test = test, by_families = !is.null(family_column)))
 
-  #los siguientes graficos solo se pueden hacer si hay predicciones
+  
   if(predict){
     fig_comp <- suppressMessages(figure_comparison(data_obj, ties ="different_data_points", main = "Option Comparison", predictions = predictions, test = test, by_families = !is.null(family_column), color_list = color_list))
 
@@ -76,15 +111,28 @@ ml <- function(x, y, x.test = NULL, y.test = NULL, family_column = NULL, split_b
               "fig_comp" = fig_comp, "optml_fig_comp" = optml_fig_comp, "optmlall_fig_comp" = optmlall_fig_comp))
 }
 
-#' @title Training models for posterior selection of algorithms
-#' @description For each algorithm (column) in the data, a model is trained to later predict the output (KPI) for that algorithm (using function `ASpredict()`).
-#' @param data_object an object.
+
+#' Internal generic for AStrain
+#' 
+#' This function serves as the internal S3 generic for `AStrain` methods.
+#' It dispatches the call to the appropriate method based on the class of `data_object`.
+#' Currently, only `as_data` is implemented. Users or developers can
+#' extend this generic by writing new methods for other classes.
+#' 
+#' @param data_object object.
 #' @param ... other parameters.
-#' @return A list, result of the respective AStrain method.
+#' 
+#' @details
+#' This generic is not intended to be used directly by package users. It exists
+#' to enable method dispatch for different classes. Marked as `internal` to keep
+#' it out of the user-facing function index.
+#' 
+#' @keywords internal
 #' @export
-"AStrain" <- function(data_object, ...) {
+AStrain <- function(data_object, ...) {
   UseMethod("AStrain")
 }
+
 
 #' @title Training models for posterior selection of algorithms
 #' @description For each algorithm (column) in the data, a model is trained to later predict the output (KPI) for that algorithm (using function `ASpredict()`).
@@ -97,9 +145,24 @@ ml <- function(x, y, x.test = NULL, y.test = NULL, family_column = NULL, split_b
 #' A list is returned of class `as_train` containing the trained models, one for each of the algorithms.
 #' @examples
 #' data(branchingsmall)
+#' # Partition and normalize the data
 #' data_object <- partition_and_normalize(branchingsmall$x, branchingsmall$y, test_size = 0.3,
 #' family_column = 1, split_by_family = TRUE)
+#' 
+#' # Example: training a regression decision tree
+#' # with cross-validation control and basic hyperparameter tuning
+#' train_control <- caret::trainControl(method = "cv", number = 5)
+#' tune_grid <- expand.grid(cp = c(0.01, 0.05, 0.1))
+#' training <- AStrain(
+#'   data_object,
+#'   method = "rpart",
+#'   trControl = train_control,
+#'   tuneGrid = tune_grid
+#' )
+#' 
+#' # Example: training with glm and similar with custom function
 #' training <- AStrain(data_object, method = "glm")
+#' 
 #' custom_function <- function(x, y) {
 #'   glm.fit(x, y)
 #' }
@@ -121,23 +184,23 @@ AStrain.as_data <- function(data_object, method = NULL, parallel = FALSE, f = NU
   }
 
   if (!parallel) {
-    ####### opcion sin paralelizar
-    for (j in 1:ncol(y)){ # tantos modelos como opciones tengamos
+    
+    for (j in 1:ncol(y)){ 
       message(paste("Training model ", j, " [", names(y)[j], "]", sep = ""))
       if (is.null(f)) {
         trained_models[[j]] <- caret::train(x, y[,j], method = method, ...)
       } else {
-	    func <- get(f, envir = globalenv())  # Obtener la función por su nombre
+	    func <- get(f, envir = globalenv())  
         trained_models[[j]] <- func(x, y[,j], ...)
       }
     }
-    #######
+    
   } else {
-    # Comprobación de que el usuario tiene el paquete snow instalado
+    
     if (!requireNamespace("snow", quietly = TRUE)) {
-      stop("Yo need to install the snow package to use the parallel option")
+      stop("You need to install the snow package to use the parallel option")
     }
-    ############# opcion con paquete snow (no mejora el tiempo de ejecucion)
+    
     cluster <- snow::makeCluster(ncol(y))
 
     if (is.null(f)) {
@@ -156,18 +219,18 @@ AStrain.as_data <- function(data_object, method = NULL, parallel = FALSE, f = NU
     }
 
     snow::stopCluster(cluster)
-    ############
+    
 
-    ##opcion con foreach (no mejora el tiempo)
-    # my.cluster <- parallel::makeCluster(parallel::detectCores() - 1, type = "PSOCK")
-    # doParallel::registerDoParallel(cl = my.cluster)
-    #
-    # trained_models <- foreach(j = 1:ncol(y)) %dopar% {
-    #   #message(paste("Training model ", j, " [", names(y)[j], "]", sep = ""))
-    #   caret::train(x, y[,j], method = method, ...)
-    # }
-    #
-    # parallel::stopCluster(cl = my.cluster)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
   }
 
   names(trained_models) <- paste("model_", names(y), sep = "")
@@ -176,19 +239,31 @@ AStrain.as_data <- function(data_object, method = NULL, parallel = FALSE, f = NU
   return(trained_models)
 }
 
-#' @title Predicting the KPI value for the algorithms
-#' @description For each algorithm, the output (KPI) is predicted using the models trained with `AStrain()`.
-#' @param training_object list of class `as_train`.
+#' Internal generic for ASpredict
+#' 
+#' This function serves as the internal S3 generic for `ASpredict` methods.
+#' It dispatches the call to the appropriate method based on the class of `training_object`.
+#' Currently, only `as_train` is implemented. Users or developers can
+#' extend this generic by writing new methods for other classes.
+#' 
+#' @param training_object object.
 #' @param ... other parameters.
-#' @return A data frame, result of the respective ASpredict method. 
+#' 
+#' @details
+#' This generic is not intended to be used directly by package users. It exists
+#' to enable method dispatch for different classes. Marked as `internal` to keep
+#' it out of the user-facing function index.
+#' 
+#' @keywords internal
 #' @export
-"ASpredict" <- function(training_object, ...) {
+ASpredict <- function(training_object, ...) {
   UseMethod("ASpredict")
 }
 
 
+
 #' @title Predicting the KPI value for the algorithms
-#' @description For each algorithm, the output (KPI) is predicted using the models traing with `AStrain()`.
+#' @description For each algorithm, the output (KPI) is predicted using the models trained with `AStrain()`.
 #' @details
 #' The `ASpredict()` uses the prediction function from `caret` to compute (for each of the models trained) the predictions for the new data provided by the user.
 #' If the user used a custom function in `AStrain()` (given by parameter `f`), `caret`'s default prediction function might not work, and the user might have to provide a custom function for `ASpredict()` as well.
@@ -223,7 +298,7 @@ ASpredict.as_train <- function(training_object, newdata = NULL, f = NULL, ...){
 
   if(is.null(newdata)){
     predictions = data.frame(matrix(NA, ncol = length(training_object), nrow = nrow(training_object[[1]]$trainingData)))
-    #newdata = training_object[[1]]$trainingData[, -ncol(training_object[[1]]$trainingData)]
+    
   }else{
     predictions = data.frame(matrix(NA, ncol = length(training_object), nrow = nrow(newdata)))
   }
@@ -247,3 +322,107 @@ ASpredict.as_train <- function(training_object, newdata = NULL, f = NULL, ...){
   class(predictions) <- c("as_predict", class(predictions))
   return(predictions)
 }
+
+
+
+#' Create DALEX explainers for multiple ASML-trained models
+#'
+#' This function simplifies the use of \CRANpkg{DALEX} with models trained
+#' using \code{AStrain} from \CRANpkg{ASML}. It automatically creates
+#' DALEX explainers for all trained models (one per algorithm in the portfolio),
+#' allowing users to easily apply DALEX functions to analyze model performance,
+#' evaluate feature importance, and generate partial dependence plots (PDPs), among other analyses.
+#'
+#' @param training An object of class \code{as_train} containing models trained with \code{AStrain}.
+#' @param data A \code{data.frame} or \code{matrix} with predictor variables. Must **not** include the target columns.
+#' @param y A \code{matrix} or \code{data.frame} containing the target variables. Each column corresponds to the output for the model at the same position in \code{training}.
+#' @param labels Optional character vector of labels for the explainers. If \code{NULL}, \code{names(training)} are used. Must have the same length as \code{training}.
+#' @param ... Additional arguments passed to \code{DALEX::explain}.
+#'
+#' @return A named list of DALEX explainer objects, one per trained model. Names are taken from \code{labels} or \code{names(training)}.
+#'
+#' @references Biecek, P. (2018). *DALEX: Explainers for Complex Predictive Models in R*. 
+#' Journal of Machine Learning Research, 19(84), 1--5. 
+#' \url{http://jmlr.org/papers/v19/18-416.html}
+#' 
+#' @examples
+#' \dontrun{
+#' library(ASML)
+#' library(DALEX)
+#' data(branching)
+#' features <- branching$x
+#' KPI <- branching$y
+#' lab_rules <- c("max", "sum", "dual", "range", "eig-VI", "eig-CMI")
+#'
+#' # Preprocess data
+#' data_obj <- partition_and_normalize(
+#'   features,
+#'   KPI,
+#'   family_column = 1,
+#'   split_by_family = TRUE,
+#'   better_smaller = TRUE
+#' )
+#'
+#' # Train models
+#' training <- AStrain(data_obj, method = "rf", parallel = TRUE)
+#'
+#' # Create explainers
+#' out <- ASexplainer(
+#'   training,
+#'   data = data_obj$x.test,
+#'   y = data_obj$y.test,
+#'   labels = lab_rules,
+#'   verbose = FALSE
+#' )
+#'
+#' # Model performance
+#' mp_regr_rf <- lapply(out, DALEX::model_performance)
+#' do.call(plot, unname(mp_regr_rf))
+#' do.call(plot, c(unname(mp_regr_rf), list(geom = "boxplot")))
+#'
+#' # Variable importance
+#' vi_regr_rf <- lapply(out, DALEX::model_parts)
+#' do.call(plot, c(unname(vi_regr_rf), list(max_vars = 5)))
+#'
+#' # Partial dependence plots
+#' pdp_regr_rf <- lapply(out, DALEX::model_profile, variable = "degree", type = "partial")
+#' do.call(plot, unname(pdp_regr_rf))
+#' }
+#' 
+#' @export
+ASexplainer <- function(training, data, y, labels = NULL, ...) { 
+  if (!inherits(training, "as_train")) {
+    stop("training must be an object of class 'as_train'")
+  }
+  
+  if (!is.matrix(y) && !is.data.frame(y)) {
+    stop("y must be a matrix or data.frame with one column per model")
+  }
+  if (ncol(y) != length(training)) {
+    stop("The number of columns in y must match the number of models in training")
+  }
+  
+  if (is.null(labels)) {
+    labels <- names(training)
+  } else {
+    if (length(labels) != length(training)) {
+      stop("Length of labels must match the number of models in training")
+    }
+  }
+  
+  explainers <- vector("list", length(training))
+  names(explainers) <- labels
+  
+  for (i in seq_along(training)) {
+    explainers[[i]] <- DALEX::explain(
+      model = training[[i]],
+      label = paste(training[[1]]$method, labels[i]),
+      data = data,
+      y = y[, i],
+      ...
+    )
+  }
+  
+  return(explainers)
+}
+

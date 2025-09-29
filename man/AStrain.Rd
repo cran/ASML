@@ -2,18 +2,24 @@
 % Please edit documentation in R/machine_learning.R
 \name{AStrain}
 \alias{AStrain}
-\title{Training models for posterior selection of algorithms}
+\title{Internal generic for AStrain}
 \usage{
 AStrain(data_object, ...)
 }
 \arguments{
-\item{data_object}{an object.}
+\item{data_object}{object.}
 
 \item{...}{other parameters.}
 }
-\value{
-A list, result of the respective AStrain method.
-}
 \description{
-For each algorithm (column) in the data, a model is trained to later predict the output (KPI) for that algorithm (using function \code{ASpredict()}).
+This function serves as the internal S3 generic for \code{AStrain} methods.
+It dispatches the call to the appropriate method based on the class of \code{data_object}.
+Currently, only \code{as_data} is implemented. Users or developers can
+extend this generic by writing new methods for other classes.
 }
+\details{
+This generic is not intended to be used directly by package users. It exists
+to enable method dispatch for different classes. Marked as \code{internal} to keep
+it out of the user-facing function index.
+}
+\keyword{internal}
